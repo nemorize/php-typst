@@ -21,10 +21,14 @@ final class FontBook
 
     public function text(string $text, array $style, ?Span $span = null): Box
     {
-        $fontId = $style['bold'] ? 1 : 0; $font = $this->fonts[$fontId]; $width = 0;
+        $fontId = $style['bold'] ? 1 : 0;
+        $font = $this->fonts[$fontId];
+        $width = 0;
         foreach (Unicode::characters($text) as $char) {
             $cp = Unicode::codepoint($char);
-            if ($font->glyph($cp) === 0) { throw new CompileException(sprintf('The bundled font has no glyph for U+%04X.', $cp), $span); }
+            if ($font->glyph($cp) === 0) {
+                throw new CompileException(sprintf('The bundled font has no glyph for U+%04X.', $cp), $span);
+            }
             $width += $font->width($cp) * $style['size'];
         }
         return new Box($width, $font->ascent / $font->unitsPerEm * $style['size'], -$font->descent / $font->unitsPerEm * $style['size'], [[

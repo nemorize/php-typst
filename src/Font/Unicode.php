@@ -16,8 +16,12 @@ final class Unicode
     public static function codepoint(string $character): int
     {
         $bytes = array_values(unpack('C*', $character));
-        $value = $bytes[0] & match (count($bytes)) { 1 => 0x7f, 2 => 0x1f, 3 => 0x0f, 4 => 0x07 };
-        for ($i = 1; $i < count($bytes); $i++) { $value = ($value << 6) | ($bytes[$i] & 0x3f); }
+        $value = $bytes[0] & match (count($bytes)) {
+            1 => 0x7f, 2 => 0x1f, 3 => 0x0f, 4 => 0x07,
+        };
+        for ($i = 1; $i < count($bytes); $i++) {
+            $value = ($value << 6) | ($bytes[$i] & 0x3f);
+        }
         return $value;
     }
 
@@ -36,7 +40,9 @@ final class Unicode
 
     public static function utf16(int $value): string
     {
-        if ($value <= 0xffff) { return pack('n', $value); }
+        if ($value <= 0xffff) {
+            return pack('n', $value);
+        }
         $value -= 0x10000;
         return pack('nn', 0xd800 + ($value >> 10), 0xdc00 + ($value & 0x3ff));
     }
@@ -44,8 +50,12 @@ final class Unicode
     public static function unescape(string $text): string
     {
         return preg_replace_callback('/\\\\(?:u\{([0-9a-fA-F]+)\}|(.))/us', static function (array $m): string {
-            if ($m[1] !== '') { return self::character((int) hexdec($m[1])); }
-            return match ($m[2]) { 'n' => "\n", 'r' => "\r", 't' => "\t", default => $m[2] };
+            if ($m[1] !== '') {
+                return self::character((int) hexdec($m[1]));
+            }
+            return match ($m[2]) {
+                'n' => "\n", 'r' => "\r", 't' => "\t", default => $m[2],
+            };
         }, $text);
     }
 }

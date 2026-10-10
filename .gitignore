@@ -2,3 +2,5 @@
 /build/
 /composer.lock
 /.DS_Store
+/.php-cs-fixer.cache
+/.php-cs-fixer.php

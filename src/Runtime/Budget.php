@@ -15,6 +15,8 @@ final class Budget
 
     public function tick(Span $span): void
     {
-        if (++$this->steps > $this->maximum) { throw new CompileException('Evaluation step limit exceeded.', $span); }
+        if (++$this->steps > $this->maximum) {
+            throw new CompileException('Evaluation step limit exceeded.', $span);
+        }
     }
 }

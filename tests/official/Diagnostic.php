@@ -27,8 +27,14 @@ final readonly class Diagnostic implements \JsonSerializable
         return ['line' => substr_count($prefix, "\n") + 1, 'column' => preg_match_all('/./us', substr($prefix, $last === false ? 0 : $last + 1)) + 1];
     }
 
-    public function matches(self $other): bool { return $this->jsonSerialize() === $other->jsonSerialize(); }
-    public function jsonSerialize(): array { return ['kind' => $this->kind, 'message' => $this->message, 'range' => $this->range, 'external_file' => $this->externalFile]; }
+    public function matches(self $other): bool
+    {
+        return $this->jsonSerialize() === $other->jsonSerialize();
+    }
+    public function jsonSerialize(): array
+    {
+        return ['kind' => $this->kind, 'message' => $this->message, 'range' => $this->range, 'external_file' => $this->externalFile];
+    }
 
     private static function relative(string $path, string $root): string
     {

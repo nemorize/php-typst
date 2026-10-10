@@ -22,10 +22,14 @@ final class Report
 
     public static function save(array $report, string $directory): void
     {
-        if (!is_dir($directory) && !mkdir($directory, 0777, true)) { throw new \RuntimeException('Cannot create report directory.'); }
+        if (!is_dir($directory) && !mkdir($directory, 0777, true)) {
+            throw new \RuntimeException('Cannot create report directory.');
+        }
         self::write($directory . '/report.json', json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n");
         $counts = [];
-        foreach ($report['counts'] as $status => $count) { $counts[] = "{$status}: {$count}"; }
+        foreach ($report['counts'] as $status => $count) {
+            $counts[] = "{$status}: {$count}";
+        }
         $html = '<!doctype html><html lang="en"><meta charset="utf-8"><title>Typst conformance: eval</title><style>body{font:15px system-ui;margin:32px;max-width:1400px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}.PASS{color:#176c31}.FAIL,.ERROR{color:#b42318}.UNSUPPORTED{color:#8a5700}summary{cursor:pointer}a{color:#175ca8}</style><h1>Official Typst tests: PHP eval</h1><p>Typst ' . self::escape($report['upstream']['version']) . ' @ ' . self::escape($report['upstream']['commit']) . '</p><p>' . self::escape($report['scope']) . '</p><p>' . implode(' · ', $counts) . '</p><p>Unsupported and unexecuted tests are never counted as passes.</p><table><thead><tr><th>Status</th><th>Test</th><th>Details</th></tr></thead><tbody>';
         foreach ($report['results'] as $result) {
             $url = 'https://github.com/typst/typst/blob/' . $report['upstream']['commit'] . '/' . $result['file'] . '#L' . $result['line'];
@@ -35,6 +39,14 @@ final class Report
         self::write($directory . '/report.html', $html . '</tbody></table></html>');
     }
 
-    private static function write(string $path, string $contents): void { if (file_put_contents($path, $contents) !== strlen($contents)) { throw new \RuntimeException("Cannot write {$path}."); } }
-    private static function escape(string $text): string { return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+    private static function write(string $path, string $contents): void
+    {
+        if (file_put_contents($path, $contents) !== strlen($contents)) {
+            throw new \RuntimeException("Cannot write {$path}.");
+        }
+    }
+    private static function escape(string $text): string
+    {
+        return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
 }

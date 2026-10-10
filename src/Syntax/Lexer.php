@@ -12,8 +12,11 @@ final class Lexer
     public function peek(): Token
     {
         $saved = $this->cursor->offset;
-        try { return $this->scan(); }
-        finally { $this->cursor->offset = $saved; }
+        try {
+            return $this->scan();
+        } finally {
+            $this->cursor->offset = $saved;
+        }
     }
 
     public function take(?string $expected = null): Token
@@ -27,7 +30,9 @@ final class Lexer
 
     public function accept(string $text): bool
     {
-        if ($this->peek()->text !== $text) { return false; }
+        if ($this->peek()->text !== $text) {
+            return false;
+        }
         $this->take();
         return true;
     }
@@ -39,11 +44,16 @@ final class Lexer
             $c->offset += strlen($c->match('/\G\s+/u') ?? '');
         } while ($c->comment());
         $start = $c->offset;
-        if ($c->atEnd()) { return new Token('eof', '', $start, $start); }
+        if ($c->atEnd()) {
+            return new Token('eof', '', $start, $start);
+        }
         if ($c->char() === '"') {
             $c->offset++;
             while (!$c->atEnd()) {
-                if ($c->char() === '\\') { $c->offset += 2; continue; }
+                if ($c->char() === '\\') {
+                    $c->offset += 2;
+                    continue;
+                }
                 if ($c->char() === '"') {
                     $c->offset++;
                     return new Token('string', substr($c->source->text, $start, $c->offset - $start), $start, $c->offset);

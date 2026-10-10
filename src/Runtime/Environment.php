@@ -16,8 +16,12 @@ final class Environment
 
     public function get(string $name, Span $span): mixed
     {
-        if (array_key_exists($name, $this->values)) { return $this->values[$name]; }
-        if ($this->parent !== null) { return $this->parent->get($name, $span); }
+        if (array_key_exists($name, $this->values)) {
+            return $this->values[$name];
+        }
+        if ($this->parent !== null) {
+            return $this->parent->get($name, $span);
+        }
         throw new CompileException("Unknown identifier '{$name}' (possibly unimplemented).", $span);
     }
 }

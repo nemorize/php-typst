@@ -21,13 +21,17 @@ final class MathParser
     public function parse(): Node
     {
         $result = $this->sequence();
-        if ($this->index !== count($this->tokens)) { $this->error('Unexpected math delimiter.'); }
+        if ($this->index !== count($this->tokens)) {
+            $this->error('Unexpected math delimiter.');
+        }
         return $result;
     }
 
     private function sequence(): Node
     {
-        if (++$this->depth > 128) { $this->error('Math nesting limit exceeded.'); }
+        if (++$this->depth > 128) {
+            $this->error('Math nesting limit exceeded.');
+        }
         $items = [];
         while ($this->peek() !== '' && !in_array($this->peek(), [')', ','], true)) {
             $item = $this->attached();
@@ -47,7 +51,9 @@ final class MathParser
         $attachments = [];
         while ($this->peek() === '^' || $this->peek() === '_') {
             $kind = $this->tokens[$this->index++];
-            if (isset($attachments[$kind])) { $this->error('Duplicate math attachment.'); }
+            if (isset($attachments[$kind])) {
+                $this->error('Duplicate math attachment.');
+            }
             $attachments[$kind] = $this->atom();
         }
         return $attachments === [] ? $base : new Node('attachment', $this->span, ['attachments' => $attachments], [$base]);
@@ -56,36 +62,60 @@ final class MathParser
     private function atom(): Node
     {
         $token = $this->peek();
-        if ($token === '' || in_array($token, [')', ',', '^', '_', '/'], true)) { $this->error('Expected math expression.'); }
+        if ($token === '' || in_array($token, [')', ',', '^', '_', '/'], true)) {
+            $this->error('Expected math expression.');
+        }
         $this->index++;
         if ($token === '(') {
             $body = $this->sequence();
-            if ($this->peek() !== ')') { $this->error('Unclosed math group.'); }
+            if ($this->peek() !== ')') {
+                $this->error('Unclosed math group.');
+            }
             $this->index++;
             return new Node('math-group', $this->span, children: [$body]);
         }
         if ($token === 'frac' || $token === 'sqrt') {
-            if ($this->peek() !== '(') { $this->error("Expected '(' after {$token}."); }
+            if ($this->peek() !== '(') {
+                $this->error("Expected '(' after {$token}.");
+            }
             $this->index++;
             $first = $this->sequence();
             $children = [$first];
             if ($token === 'frac') {
-                if ($this->peek() !== ',') { $this->error('frac() expects two math arguments.'); }
+                if ($this->peek() !== ',') {
+                    $this->error('frac() expects two math arguments.');
+                }
                 $this->index++;
                 $children[] = $this->sequence();
             }
-            if ($this->peek() !== ')') { $this->error('Unclosed math function.'); }
+            if ($this->peek() !== ')') {
+                $this->error('Unclosed math function.');
+            }
             $this->index++;
             return new Node($token === 'frac' ? 'fraction' : 'sqrt', $this->span, children: $children);
         }
-        if ($token[0] === '"') { $text = \Nemorize\Typst\Font\Unicode::unescape(substr($token, 1, -1)); }
-        elseif (isset(self::SYMBOLS[$token])) { $text = self::SYMBOLS[$token]; }
-        elseif (preg_match('/^[\p{L}]{2,}/u', $token)) { $this->error("Unknown or unimplemented math symbol '{$token}'."); }
-        elseif (in_array($token, ['#', '&', '\\', '{', '}'], true)) { $this->error("Math syntax '{$token}' is not implemented yet."); }
-        else { $text = match ($token) { '!=' => '≠', '<=' => '≤', '>=' => '≥', '->' => '→', default => $token }; }
+        if ($token[0] === '"') {
+            $text = \Nemorize\Typst\Font\Unicode::unescape(substr($token, 1, -1));
+        } elseif (isset(self::SYMBOLS[$token])) {
+            $text = self::SYMBOLS[$token];
+        } elseif (preg_match('/^[\p{L}]{2,}/u', $token)) {
+            $this->error("Unknown or unimplemented math symbol '{$token}'.");
+        } elseif (in_array($token, ['#', '&', '\\', '{', '}'], true)) {
+            $this->error("Math syntax '{$token}' is not implemented yet.");
+        } else {
+            $text = match ($token) {
+                '!=' => '≠', '<=' => '≤', '>=' => '≥', '->' => '→', default => $token,
+            };
+        }
         return new Node('math-text', $this->span, ['text' => $text]);
     }
 
-    private function peek(): string { return $this->tokens[$this->index] ?? ''; }
-    private function error(string $message): never { throw new \Nemorize\Typst\CompileException($message, $this->span); }
+    private function peek(): string
+    {
+        return $this->tokens[$this->index] ?? '';
+    }
+    private function error(string $message): never
+    {
+        throw new \Nemorize\Typst\CompileException($message, $this->span);
+    }
 }

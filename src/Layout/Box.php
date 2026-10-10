@@ -12,8 +12,12 @@ final readonly class Box
     public function shifted(float $x, float $y): array
     {
         return array_map(static function (array $item) use ($x, $y): array {
-            $item['x'] += $x; $item['y'] += $y;
-            if ($item['kind'] === 'line') { $item['x2'] += $x; $item['y2'] += $y; }
+            $item['x'] += $x;
+            $item['y'] += $y;
+            if ($item['kind'] === 'line') {
+                $item['x2'] += $x;
+                $item['y2'] += $y;
+            }
             return $item;
         }, $this->items);
     }

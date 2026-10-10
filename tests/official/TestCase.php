@@ -17,5 +17,8 @@ final readonly class TestCase
         public array $sourceLines,
     ) {}
 
-    public function isEval(): bool { return in_array('eval', $this->attributes, true); }
+    public function isEval(): bool
+    {
+        return in_array('eval', $this->attributes, true);
+    }
 }

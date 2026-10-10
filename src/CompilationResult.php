@@ -16,11 +16,17 @@ final readonly class CompilationResult
             throw new \RuntimeException('Output parent directory must exist and be writable.');
         }
         $temporary = tempnam($directory, '.php-typst-');
-        if ($temporary === false) { throw new \RuntimeException('Cannot create an output file.'); }
+        if ($temporary === false) {
+            throw new \RuntimeException('Cannot create an output file.');
+        }
         try {
             if (file_put_contents($temporary, $this->pdf) !== strlen($this->pdf) || !rename($temporary, $path)) {
                 throw new \RuntimeException("Cannot write output '{$path}'.");
             }
-        } finally { if (is_file($temporary)) { unlink($temporary); } }
+        } finally {
+            if (is_file($temporary)) {
+                unlink($temporary);
+            }
+        }
     }
 }

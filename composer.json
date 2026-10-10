@@ -2,11 +2,29 @@
     "name": "nemorize/php-typst",
     "description": "An experimental Typst compiler implemented in PHP",
     "type": "library",
-    "require": { "php": ">=8.5" },
-    "autoload": { "psr-4": { "Nemorize\\Typst\\": "src/" } },
-    "bin": ["bin/php-typst"],
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=8.5"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nemorize\\Typst\\": "src/"
+        }
+    },
+    "bin": [
+        "bin/php-typst"
+    ],
     "scripts": {
-        "test": ["@php tests/run.php", "@php tests/official/self-test.php", "@test:official:baseline"],
+        "format": "@php vendor/bin/php-cs-fixer fix . --config=.php-cs-fixer.dist.php --path-mode=intersection --using-cache=no",
+        "format:check": "@php vendor/bin/php-cs-fixer check . --config=.php-cs-fixer.dist.php --path-mode=intersection --using-cache=no --diff",
+        "test": [
+            "@php tests/run.php",
+            "@php tests/official/self-test.php",
+            "@test:official:baseline"
+        ],
         "test:official": "@php tests/official/run.php",
         "test:official:baseline": "@php tests/official/run.php --baseline tests/official/baseline.json"
     }

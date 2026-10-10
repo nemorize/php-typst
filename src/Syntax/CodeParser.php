@@ -28,7 +28,9 @@ final class CodeParser
             $params = $this->lexer->peek()->text === '(' ? $this->parameters() : null;
             $this->lexer->take('=');
             $value = $this->expression();
-            if ($params !== null) { $value = $this->node('function', $start, ['parameters' => $params], [$value]); }
+            if ($params !== null) {
+                $value = $this->node('function', $start, ['parameters' => $params], [$value]);
+            }
             $result = $this->node('let', $start, ['name' => $name], [$value]);
         } elseif ($word === 'set') {
             $this->lexer->take();
@@ -41,9 +43,16 @@ final class CodeParser
             $alias = null;
             if ($word === 'import' && $this->lexer->accept(':')) {
                 $names = [];
-                if ($this->lexer->accept('*')) { $names = ['*']; }
-                else { do { $names[] = $this->identifier(); } while ($this->lexer->accept(',')); }
-            } elseif ($word === 'import' && $this->lexer->accept('as')) { $alias = $this->identifier(); }
+                if ($this->lexer->accept('*')) {
+                    $names = ['*'];
+                } else {
+                    do {
+                        $names[] = $this->identifier();
+                    } while ($this->lexer->accept(','));
+                }
+            } elseif ($word === 'import' && $this->lexer->accept('as')) {
+                $alias = $this->identifier();
+            }
             $result = $this->node($word, $start, ['names' => $names, 'alias' => $alias], [$path]);
         } elseif (in_array($word, ['show', 'context', 'while', 'return', 'break', 'continue'], true)) {
             $this->lexer->cursor->error("'{$word}' is not implemented yet.", $start);
@@ -56,15 +65,20 @@ final class CodeParser
 
     public function expression(int $minimum = 0, bool $contentCalls = true): Node
     {
-        if (++$this->depth > 128) { $this->lexer->cursor->error('Expression nesting limit exceeded.'); }
+        if (++$this->depth > 128) {
+            $this->lexer->cursor->error('Expression nesting limit exceeded.');
+        }
         $t = $this->lexer->take();
         $start = $t->start;
         if ($t->kind === 'number') {
             preg_match('/^(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(.*)$/', $t->text, $m);
             $left = $this->node('literal', $start, ['value' => str_contains($m[1], '.') || stripos($m[1], 'e') !== false ? (float) $m[1] : (int) $m[1], 'unit' => $m[2]]);
         } elseif ($t->kind === 'string') {
-            try { $value = Unicode::unescape(substr($t->text, 1, -1)); }
-            catch (\InvalidArgumentException $e) { $this->lexer->cursor->error($e->getMessage(), $start); }
+            try {
+                $value = Unicode::unescape(substr($t->text, 1, -1));
+            } catch (\InvalidArgumentException $e) {
+                $this->lexer->cursor->error($e->getMessage(), $start);
+            }
             $left = $this->node('literal', $start, ['value' => $value]);
         } elseif (in_array($t->text, ['-', '+', 'not'], true)) {
             $left = $this->node('unary', $start, ['operator' => $t->text], [$this->expression(7, $contentCalls)]);
@@ -74,7 +88,9 @@ final class CodeParser
         } elseif ($t->text === '{') {
             $children = [];
             while ($this->lexer->peek()->text !== '}') {
-                if ($this->lexer->peek()->kind === 'eof') { $this->lexer->cursor->error('Unclosed code block.', $start); }
+                if ($this->lexer->peek()->kind === 'eof') {
+                    $this->lexer->cursor->error('Unclosed code block.', $start);
+                }
                 $children[] = $this->statement(false);
             }
             $this->lexer->take('}');
@@ -83,17 +99,22 @@ final class CodeParser
             $items = [];
             $dict = false;
             $comma = false;
-            if ($this->lexer->accept(':')) { $dict = true; }
-            elseif ($this->lexer->peek()->text !== ')') {
+            if ($this->lexer->accept(':')) {
+                $dict = true;
+            } elseif ($this->lexer->peek()->text !== ')') {
                 do {
                     $item = $this->expression();
                     if ($this->lexer->accept(':')) {
                         $dict = true;
-                        if ($item->kind !== 'identifier') { $this->lexer->cursor->error('Dictionary keys must be identifiers.', $item->span->start); }
+                        if ($item->kind !== 'identifier') {
+                            $this->lexer->cursor->error('Dictionary keys must be identifiers.', $item->span->start);
+                        }
                         $item = $this->node('entry', $item->span->start, ['name' => $item->data['name']], [$this->expression()]);
                     }
                     $items[] = $item;
-                    if (!$this->lexer->accept(',')) { break; }
+                    if (!$this->lexer->accept(',')) {
+                        break;
+                    }
                     $comma = true;
                 } while ($this->lexer->peek()->text !== ')');
             }
@@ -101,7 +122,9 @@ final class CodeParser
             if ($this->lexer->accept('=>')) {
                 $params = [];
                 foreach ($items as $item) {
-                    if ($item->kind !== 'identifier') { $this->lexer->cursor->error('Expected function parameter.', $item->span->start); }
+                    if ($item->kind !== 'identifier') {
+                        $this->lexer->cursor->error('Expected function parameter.', $item->span->start);
+                    }
                     $params[$item->data['name']] = null;
                 }
                 $left = $this->node('function', $start, ['parameters' => $params], [$this->expression()]);
@@ -112,7 +135,9 @@ final class CodeParser
             $condition = $this->expression(0, false);
             $yes = $this->expression(0, false);
             $children = [$condition, $yes];
-            if ($this->lexer->accept('else')) { $children[] = $this->expression(0, false); }
+            if ($this->lexer->accept('else')) {
+                $children[] = $this->expression(0, false);
+            }
             $left = $this->node('if', $start, [], $children);
         } elseif ($t->text === 'for') {
             $name = $this->identifier();
@@ -122,7 +147,9 @@ final class CodeParser
             $left = $this->node('for', $start, ['name' => $name], [$items, $body]);
         } elseif ($t->kind === 'identifier') {
             $left = match ($t->text) {
-                'true', 'false', 'none' => $this->node('literal', $start, ['value' => match ($t->text) { 'true' => true, 'false' => false, default => null }]),
+                'true', 'false', 'none' => $this->node('literal', $start, ['value' => match ($t->text) {
+                    'true' => true, 'false' => false, default => null,
+                }]),
                 default => $this->node('identifier', $start, ['name' => $t->text]),
             };
             if ($this->lexer->accept('=>')) {
@@ -135,16 +162,24 @@ final class CodeParser
         while (true) {
             $next = $this->lexer->peek();
             if ($next->text === '.') {
-                if (preg_match('/\G\.[\p{L}_]/u', $this->lexer->cursor->source->text, $m, 0, $next->start) !== 1) { break; }
-                if ($minimum === 8 && $next->start !== $this->lexer->cursor->offset) { break; }
+                if (preg_match('/\G\.[\p{L}_]/u', $this->lexer->cursor->source->text, $m, 0, $next->start) !== 1) {
+                    break;
+                }
+                if ($minimum === 8 && $next->start !== $this->lexer->cursor->offset) {
+                    break;
+                }
                 $this->lexer->take();
                 $left = $this->node('member', $start, ['name' => $this->identifier()], [$left]);
             } elseif ($next->text === '(') {
-                if ($minimum === 8 && $next->start !== $this->lexer->cursor->offset) { break; }
+                if ($minimum === 8 && $next->start !== $this->lexer->cursor->offset) {
+                    break;
+                }
                 $left = $this->node('call', $start, [], [$left, ...$this->arguments()]);
             } elseif ($next->text === '[' && $contentCalls && in_array($left->kind, ['identifier', 'member', 'call'], true)) {
                 // A trailing content argument must be adjacent to the callee.
-                if ($next->start !== $this->lexer->cursor->offset) { break; }
+                if ($next->start !== $this->lexer->cursor->offset) {
+                    break;
+                }
                 $this->lexer->take();
                 $body = $this->markup->markup(']');
                 $this->lexer->take(']');
@@ -156,7 +191,9 @@ final class CodeParser
                 $this->lexer->take();
                 $right = $this->expression(self::PRECEDENCE[$next->text] + 1, $contentCalls);
                 $left = $this->node('binary', $start, ['operator' => $next->text], [$left, $right]);
-            } else { break; }
+            } else {
+                break;
+            }
         }
         $this->depth--;
         return $left;
@@ -171,12 +208,16 @@ final class CodeParser
             $value = $this->expression();
             $name = null;
             if ($this->lexer->accept(':')) {
-                if ($value->kind !== 'identifier') { $this->lexer->cursor->error('Expected named argument.', $value->span->start); }
+                if ($value->kind !== 'identifier') {
+                    $this->lexer->cursor->error('Expected named argument.', $value->span->start);
+                }
                 $name = $value->data['name'];
                 $value = $this->expression();
             }
             $args[] = $this->node('argument', $value->span->start, ['name' => $name], [$value]);
-            if (!$this->lexer->accept(',')) { break; }
+            if (!$this->lexer->accept(',')) {
+                break;
+            }
         }
         $this->lexer->take(')');
         return $args;
@@ -189,9 +230,13 @@ final class CodeParser
         $params = [];
         while ($this->lexer->peek()->text !== ')') {
             $name = $this->identifier();
-            if (array_key_exists($name, $params)) { $this->lexer->cursor->error("Duplicate parameter '{$name}'."); }
+            if (array_key_exists($name, $params)) {
+                $this->lexer->cursor->error("Duplicate parameter '{$name}'.");
+            }
             $params[$name] = $this->lexer->accept(':') ? $this->expression() : null;
-            if (!$this->lexer->accept(',')) { break; }
+            if (!$this->lexer->accept(',')) {
+                break;
+            }
         }
         $this->lexer->take(')');
         return $params;
@@ -200,7 +245,9 @@ final class CodeParser
     private function identifier(): string
     {
         $token = $this->lexer->take();
-        if ($token->kind !== 'identifier') { $this->lexer->cursor->error('Expected identifier.', $token->start); }
+        if ($token->kind !== 'identifier') {
+            $this->lexer->cursor->error('Expected identifier.', $token->start);
+        }
         return $token->text;
     }
 }

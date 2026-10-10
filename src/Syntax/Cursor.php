@@ -12,9 +12,18 @@ final class Cursor
 
     public function __construct(public readonly Source $source) {}
 
-    public function atEnd(): bool { return $this->offset >= strlen($this->source->text); }
-    public function starts(string $text): bool { return substr_compare($this->source->text, $text, $this->offset, strlen($text)) === 0; }
-    public function char(): string { return $this->source->text[$this->offset] ?? ''; }
+    public function atEnd(): bool
+    {
+        return $this->offset >= strlen($this->source->text);
+    }
+    public function starts(string $text): bool
+    {
+        return substr_compare($this->source->text, $text, $this->offset, strlen($text)) === 0;
+    }
+    public function char(): string
+    {
+        return $this->source->text[$this->offset] ?? '';
+    }
 
     public function match(string $pattern): ?string
     {
@@ -43,9 +52,18 @@ final class Cursor
         $this->offset += 2;
         $depth = 1;
         while (!$this->atEnd()) {
-            if ($this->starts('/*')) { $depth++; $this->offset += 2; }
-            elseif ($this->starts('*/')) { $depth--; $this->offset += 2; if ($depth === 0) { return true; } }
-            else { $this->offset++; }
+            if ($this->starts('/*')) {
+                $depth++;
+                $this->offset += 2;
+            } elseif ($this->starts('*/')) {
+                $depth--;
+                $this->offset += 2;
+                if ($depth === 0) {
+                    return true;
+                }
+            } else {
+                $this->offset++;
+            }
         }
         $this->error('Unclosed block comment.', $start);
     }
