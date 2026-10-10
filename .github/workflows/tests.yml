@@ -1,0 +1,28 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Syntax
+        run: find src tests examples -name '*.php' -print0 | xargs -0 -n 1 php -l
+      - name: Test without process execution
+        run: php -d disable_functions=exec,shell_exec,system,passthru,proc_open,popen tests/run.php
+      - name: Official runner checks
+        run: php -d disable_functions=exec,shell_exec,system,passthru,proc_open,popen tests/official/self-test.php
+      - name: Official eval regression baseline
+        run: php -d disable_functions=exec,shell_exec,system,passthru,proc_open,popen tests/official/run.php --baseline tests/official/baseline.json
+      - name: Save official test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-typst-eval
+          path: build/official-tests/report.*
+          if-no-files-found: warn
+      - name: Compile example
+        run: php examples/compile.php

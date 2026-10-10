@@ -1,0 +1,24 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require dirname(__DIR__) . '/autoload.php';
+
+use Nemorize\Typst\Compiler;
+
+if (count($argv) === 2 && in_array($argv[1], ['--help', '-h'], true)) {
+    fwrite(STDOUT, "Usage: php-typst compile INPUT.typ OUTPUT.pdf [--root DIRECTORY]\nExperimental PHP compiler. See docs/compatibility.md for supported features.\n");
+    exit(0);
+}
+if (($argv[1] ?? '') !== 'compile' || !in_array(count($argv), [4, 6], true) || (count($argv) === 6 && $argv[4] !== '--root')) {
+    fwrite(STDERR, "Usage: php-typst compile INPUT.typ OUTPUT.pdf [--root DIRECTORY]\n");
+    exit(2);
+}
+try {
+    $result = (new Compiler())->compileFile($argv[2], $argv[3], $argv[5] ?? null);
+    fwrite(STDOUT, "Compiled {$result->pageCount} page(s) to {$argv[3]}\n");
+} catch (Throwable $error) {
+    fwrite(STDERR, $error->getMessage() . "\n");
+    exit(1);
+}

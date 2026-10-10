@@ -1,0 +1,13 @@
+{
+    "name": "nemorize/php-typst",
+    "description": "An experimental Typst compiler implemented in PHP",
+    "type": "library",
+    "require": { "php": ">=8.5" },
+    "autoload": { "psr-4": { "Nemorize\\Typst\\": "src/" } },
+    "bin": ["bin/php-typst"],
+    "scripts": {
+        "test": ["@php tests/run.php", "@php tests/official/self-test.php", "@test:official:baseline"],
+        "test:official": "@php tests/official/run.php",
+        "test:official:baseline": "@php tests/official/run.php --baseline tests/official/baseline.json"
+    }
+}
